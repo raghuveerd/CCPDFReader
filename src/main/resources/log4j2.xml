@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration monitorInterval="30">
+    <properties>
+        <property name="log4j2.logDir">.</property>
+        <property name="logDir">log</property>
+        <property name="log4j2.filePrefix">default</property>
+    </properties>
+    <appenders>
+        <RollingFile name="Default" fileName="${logDir}/reader.log"
+                     filePattern="${logDir}/log-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout charset="UTF-8" pattern="%d %-5p [%t] %c %m [%M:%L %X] %n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="200"/>
+        </RollingFile>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %-5p [%t] %c %m [%M:%L %X] %n"/>
+        </Console>
+    </appenders>
+    <loggers>
+        <logger name="dr.reader" level="info" additivity="false">
+            <appender-ref ref="Default"/>
+        </logger>
+        <root level="info">
+            <appender-ref ref="Console"/>
+        </root>
+    </loggers>
+</configuration>
