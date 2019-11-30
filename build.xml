@@ -1,0 +1,72 @@
+<project name="PDFReader" default="help" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+    <path id="maven-ant-tasks.classpath" path="ant_lib/maven-ant-tasks-2.1.3.jar"/>
+    <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant"
+             classpathref="maven-ant-tasks.classpath"/>
+    <target name="help">
+        <echo>Run help to generate !!</echo>
+    </target>
+
+    <target name="download">
+        <artifact:dependencies filesetId="dependency.classpath">
+            <artifact:dependency groupId="org.apache.pdfbox" artifactId="pdfbox" version="2.0.17"/>
+            <artifact:dependency groupId="org.apache.logging.log4j" artifactId="log4j-api" version="2.12.1"/>
+            <artifact:dependency groupId="org.apache.logging.log4j" artifactId="log4j-core" version="2.12.1"/>
+        </artifact:dependencies>
+        <copy todir="lib">
+            <fileset refid="dependency.classpath"/>
+            <!-- This mapper strips off all leading directory information -->
+            <mapper type="flatten"/>
+        </copy>
+    </target>
+
+    <target name="clean">
+        <delete failonerror="no" includeemptydirs="yes" >
+            <fileset dir="target" includes="**/*"/>
+        </delete>
+    </target>
+
+    <target name="package" depends="clean,download">
+
+        <!-- COMPILE -->
+
+        <path id="buildPath">
+            <fileset dir="lib">
+                <include name="*.jar"/>
+            </fileset>
+
+        </path>
+        <mkdir dir="target/main/out"/>
+        <javac classpathref="buildPath" debug="on" srcdir="src/main/java" destdir="target/main/out">
+            <include name="**/*"/>
+        </javac>
+
+        <delete file="target/reader.jar" failonerror="no" />
+        <jar basedir="target/main/out" file="target/dist/lib/reader.jar" duplicate="preserve">
+            <manifest>
+                <attribute name="Main-Class"
+                           value="dr.reader.Runner"/>
+            </manifest>
+            <fileset dir="target/main/out">
+                <include name="**/*"/>
+            </fileset>
+        </jar>
+
+        <copy todir="target/dist/resources">
+            <fileset dir="src/main/resources">
+                <include name="**/*"/>
+                <exclude name="input/*.*"/>
+                <exclude name="output/*.*"/>
+            </fileset>
+        </copy>
+
+        <copy todir="target/dist/lib">
+            <fileset dir="${basedir}/lib">
+                <include name="*.jar*"/>
+            </fileset>
+        </copy>
+
+        <copy file="${basedir}/reader.bat" todir="${basedir}/target/dist" overwrite="true"/>
+
+    </target>
+
+</project>
