@@ -14,6 +14,7 @@ public class CSVStatementGenerator {
 
     private static final Logger log = LogManager.getLogger(CSVStatementGenerator.class);
     private static final String CSV_HEADER = "DATE, DESCRIPTION, AMOUNT, TYPE, CATEGORY";
+    private static final String CATEGORY_STR = "CATEGORY.";
 
     private Properties getProp() throws Exception {
         InputStream input = CSVStatementGenerator.class.getClassLoader().getResourceAsStream("statement.properties");
@@ -31,9 +32,9 @@ public class CSVStatementGenerator {
             Properties prop = getProp();
             Map<String, List<String>> categories = getCategorySettings(prop);
 
-            String inputDir = prop.getProperty("statement.input.dir");
-            String passwordString = prop.getProperty("statement.passwords");
-            List<String> passwords = Arrays.asList(passwordString.split(","));
+            String inputDir = prop.getProperty(StatementProps.INPUT_DIR.getPropKey());
+            String passwordString = prop.getProperty(StatementProps.PASSWORDS.getPropKey());
+            String[] passwords = passwordString.split(",");
 
             File dir = new File(inputDir);
             File[] pdfFiles = dir.listFiles();
@@ -52,7 +53,7 @@ public class CSVStatementGenerator {
 
                     for (String password : passwords) {
                         try {
-                            document = PDDocument.load(pdfFile, password);
+                            document = PDDocument.load(pdfFile, password.trim());
                             isPDFOpened = true;
                             break;
                         } catch (InvalidPasswordException ex) {
@@ -63,7 +64,6 @@ public class CSVStatementGenerator {
                     if (!isPDFOpened) {
                         throw new Exception("Passwords does not work !!");
                     }
-
 
                     document.getClass();
                     String pdfFileInText = tStripper.getText(document);
@@ -78,15 +78,12 @@ public class CSVStatementGenerator {
                     } else {
                         allCSVs.addAll(csvStrings);
                     }
-
                 }
 
                 if (consolidated) {
                     writeOutputFile("statement", prop, allCSVs);
                 }
-
             }
-
 
         } catch (Exception e) {
             log.error("Error !!!", e);
@@ -103,17 +100,16 @@ public class CSVStatementGenerator {
 
     private void writeOutputFile(String fileName, Properties prop, List<String> csvStrings) throws IOException {
 
-        String outputDir = prop.getProperty("statement.output.dir");
+        String outputDir = prop.getProperty(StatementProps.OUTPUT_DIR.getPropKey());
         FileWriter fileWriter = null;
         BufferedWriter bufferedWriter = null;
         try {
             fileWriter = new FileWriter(outputDir + File.separator + fileName + ".csv");
             bufferedWriter = new BufferedWriter(fileWriter);
             bufferedWriter.write(CSV_HEADER);
-            bufferedWriter.newLine();
             for (String csvString : csvStrings) {
-                bufferedWriter.write(csvString);
                 bufferedWriter.newLine();
+                bufferedWriter.write(csvString);
             }
         } catch (Exception e) {
             log.error("Error!!", e);
@@ -126,8 +122,6 @@ public class CSVStatementGenerator {
                 fileWriter.close();
             }
         }
-
-
     }
 
     private Map<String, List<String>> getCategorySettings(Properties prop) {
@@ -135,12 +129,11 @@ public class CSVStatementGenerator {
         Set<String> propertyNames = prop.stringPropertyNames();
 
         for (String propertyName : propertyNames) {
-            if (propertyName.startsWith("CATEGORY")) {
+            if (propertyName.startsWith(CATEGORY_STR)) {
                 List<String> categoryEntries = Arrays.asList(prop.getProperty(propertyName).split(","));
-                categories.put(propertyName.replace("CATEGORY.", ""), categoryEntries);
+                categories.put(propertyName.replace(CATEGORY_STR, ""), categoryEntries);
             }
         }
         return categories;
     }
-
 }

@@ -8,6 +8,7 @@ import java.util.*;
 public class StatementReaderImpl implements StatementReader {
 
     private static final Logger log = LogManager.getLogger(StatementReaderImpl.class);
+    private static final String UNCATEGORISED_CATEGORY = "UNCATEGORISED";
 
     public List<String> getTransactionsAsCSV(String[] lines, Properties cardProps, Map<String, List<String>> categories) {
         List<String> transactions = getTransactions(lines, cardProps);
@@ -68,8 +69,6 @@ public class StatementReaderImpl implements StatementReader {
     }
 
     private String getCategory(Map<String, List<String>> categories, String description) {
-        String category = "UNCATEGORISED";
-
         for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
             String key = entry.getKey();
             List<String> catStrings = entry.getValue();
@@ -79,7 +78,7 @@ public class StatementReaderImpl implements StatementReader {
                 }
             }
         }
-        return category;
+        return UNCATEGORISED_CATEGORY;
     }
 
     private List<String> getTransactions(String[] lines, Properties cardProps) {
