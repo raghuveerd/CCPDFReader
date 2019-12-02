@@ -24,6 +24,8 @@ public class CSVStatementGenerator {
 
     public void generate(boolean consolidated) throws Exception {
 
+        PDDocument document = null;
+
         try {
 
             Properties prop = getProp();
@@ -47,7 +49,7 @@ public class CSVStatementGenerator {
                 for (File pdfFile : pdfFiles) {
 
                     boolean isPDFOpened = false;
-                    PDDocument document = null;
+
                     for (String password : passwords) {
                         try {
                             document = PDDocument.load(pdfFile, password);
@@ -90,6 +92,10 @@ public class CSVStatementGenerator {
             log.error("Error !!!", e);
             System.out.println("ERROR !! Statement Generation Failed. Check Logs");
             throw new Exception("Error Generating Statements");
+        } finally {
+            if (document != null) {
+                document.close();
+            }
         }
 
         System.out.println("Statement Generation Completed");

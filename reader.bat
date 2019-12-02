@@ -7,7 +7,6 @@ rem *************************************************************************
 rem SET THE FOLLOWING PATHS
 
 set JAVA_HOME=C:\installs\java\jdk1.8.0_181
-rem set CLASSPATH=./lib/*.jar
 set CLASSPATH=.\lib\*;.\resources
 
 rem  Run tool
