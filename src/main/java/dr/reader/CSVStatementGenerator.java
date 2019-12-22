@@ -13,7 +13,7 @@ import java.util.*;
 public class CSVStatementGenerator {
 
     private static final Logger log = LogManager.getLogger(CSVStatementGenerator.class);
-    private static final String CSV_HEADER = "DATE, DESCRIPTION, AMOUNT, TYPE, CATEGORY";
+    private static final String CSV_HEADER = "CARD, DATE, DESCRIPTION, AMOUNT, TYPE, CATEGORY";
     private static final String CATEGORY_STR = "CATEGORY.";
 
     private Properties getProp() throws Exception {
@@ -71,7 +71,7 @@ public class CSVStatementGenerator {
                     String[] lines = pdfFileInText.split("\\r?\\n");
 
                     StatementReader reader = new StatementReaderImpl();
-                    List<String> csvStrings = reader.getTransactionsAsCSV(lines, prop, categories);
+                    List<String> csvStrings = reader.getTransactionsAsCSV(pdfFile.getName(),lines, prop, categories);
 
                     if (!consolidated) {
                         writeOutputFile(pdfFile.getName(), prop, csvStrings);

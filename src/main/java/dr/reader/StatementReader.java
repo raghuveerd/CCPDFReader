@@ -10,5 +10,5 @@ public interface StatementReader {
     String EMPTY_STRING = "";
     String COMMA = ",";
 
-    List<String> getTransactionsAsCSV(String[] lines, Properties cardProps, Map<String, List<String>> categories);
+    List<String> getTransactionsAsCSV(String name, String[] lines, Properties cardProps, Map<String, List<String>> categories);
 }

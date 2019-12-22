@@ -10,9 +10,11 @@ public class StatementReaderImpl implements StatementReader {
     private static final Logger log = LogManager.getLogger(StatementReaderImpl.class);
     private static final String UNCATEGORISED_CATEGORY = "UNCATEGORISED";
 
-    public List<String> getTransactionsAsCSV(String[] lines, Properties cardProps, Map<String, List<String>> categories) {
+    public List<String> getTransactionsAsCSV(String name, String[] lines, Properties cardProps, Map<String, List<String>> categories) {
         List<String> transactions = getTransactions(lines, cardProps);
         List<String> csvStrings = new ArrayList<>();
+
+        String cardName = name.substring(0,name.indexOf("."));
         for (String transaction : transactions) {
 
             transaction = handleSpecialCases(transaction);
@@ -29,6 +31,8 @@ public class StatementReaderImpl implements StatementReader {
             String category = getCategory(categories, transaction);
 
             StringBuilder csvString = new StringBuilder();
+            csvString.append(cardName);
+            csvString.append(COMMA);
             csvString.append(date);
             csvString.append(COMMA);
             csvString.append(description);
