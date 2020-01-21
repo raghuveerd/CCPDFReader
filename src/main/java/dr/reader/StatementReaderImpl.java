@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class StatementReaderImpl implements StatementReader {
 
@@ -14,7 +15,7 @@ public class StatementReaderImpl implements StatementReader {
         List<String> transactions = getTransactions(lines, cardProps);
         List<String> csvStrings = new ArrayList<>();
 
-        String cardName = name.substring(0,name.indexOf("."));
+        String cardName = name.substring(0, name.indexOf("."));
         for (String transaction : transactions) {
 
             transaction = handleSpecialCases(transaction);
@@ -92,6 +93,10 @@ public class StatementReaderImpl implements StatementReader {
         String endString = cardProps.getProperty(StatementProps.END.getPropKey());
         List<String> endStringList = Arrays.asList(endString.split(COMMA));
         String statementStringIdentifier = cardProps.getProperty(StatementProps.LINE_START.getPropKey());
+        String statementStringIdentifierRegex = cardProps.getProperty(StatementProps.LINE_REGEXP.getPropKey());
+
+        List<Pattern> lineStartRegexPatterns = getLineStartRegexPatterns(statementStringIdentifierRegex);
+
         boolean statementStarted = false;
         boolean statementEnded = false;
 
@@ -105,14 +110,45 @@ public class StatementReaderImpl implements StatementReader {
             }
 
             if (statementStarted && !statementEnded) {
-                List<String> list = Arrays.asList(line.split(SINGLE_SPACE));
-                if (list.size() > 0 && list.get(0).contains(statementStringIdentifier) &&
-                        Character.isDigit(list.get(0).charAt(0))) {
+                if (isStatementLineTransaction(line, statementStringIdentifier, lineStartRegexPatterns)) {
                     transactions.add(line);
                 }
             }
         }
         return transactions;
+    }
+
+    private boolean isStatementLineTransaction(String line, String statementStringIdentifier, List<Pattern> lineStartRegexPatterns) {
+
+        List<String> list = Arrays.asList(line.split(SINGLE_SPACE));
+        String firstWord = list.size() > 0 ? list.get(0) : "";
+
+        // Regex matching
+        if (lineStartRegexPatterns.size() > 0) {
+            for (Pattern p : lineStartRegexPatterns) {
+                boolean isMatches = p.matcher(firstWord).matches();
+                if (isMatches) {
+                    return true;
+                }
+            }
+        }
+
+        // contains matching
+        if (lineStartRegexPatterns.size() == 0) {
+            return firstWord.contains(statementStringIdentifier) &&
+                    Character.isDigit(firstWord.charAt(0));
+        }
+        return false;
+    }
+
+    private List<Pattern> getLineStartRegexPatterns(String statementStringIdentifierRegex) {
+        List<Pattern> patterns = new ArrayList<>();
+        List<String> patternStringList = Arrays.asList(statementStringIdentifierRegex.split(COMMA));
+        for (String entry : patternStringList) {
+            Pattern tempPattern = Pattern.compile(entry);
+            patterns.add(tempPattern);
+        }
+        return patterns;
     }
 
     private boolean isLineStatementStart(List<String> startStringList, String line) {
