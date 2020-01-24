@@ -15,6 +15,10 @@ public class StatementReaderImpl implements StatementReader {
         List<String> transactions = getTransactions(lines, cardProps);
         List<String> csvStrings = new ArrayList<>();
 
+        //ICICI statements contains duplicate entries when there are more statements
+        //they do this to show everything back in one page.
+        List<String> refIds = new ArrayList<>(transactions.size());
+
         String cardName = name.substring(0, name.indexOf("."));
         for (String transaction : transactions) {
 
@@ -23,9 +27,19 @@ public class StatementReaderImpl implements StatementReader {
             List<String> transactionSplit = Arrays.asList(transaction.split(SINGLE_SPACE));
             String date = transactionSplit.get(0);
             String amount = transactionSplit.get(transactionSplit.size() - 1);
+            String refId = transactionSplit.get(1);
+
+            if (refIds.contains(refId)) {
+                log.error("Duplicate Refid: " + refId);
+                log.error("Duplicate transaction : " + transaction);
+                continue;
+            } else {
+                refIds.add(refId);
+            }
+
             //replace thousand separators
             amount = amount.replace(COMMA, EMPTY_STRING);
-            String description = mergeList(transactionSplit, 1, transactionSplit.size() - 1);
+            String description = mergeList(transactionSplit, 2, transactionSplit.size() - 1);
             //replace comma in description
             description = description.replace(COMMA, SINGLE_SPACE);
             String isCredit = amount.endsWith(CREDIT_SUFFIX) ? CREDIT_SUFFIX : EMPTY_STRING;
@@ -35,6 +49,8 @@ public class StatementReaderImpl implements StatementReader {
             csvString.append(cardName);
             csvString.append(COMMA);
             csvString.append(date);
+            csvString.append(COMMA);
+            csvString.append(refId);
             csvString.append(COMMA);
             csvString.append(description);
             csvString.append(COMMA);

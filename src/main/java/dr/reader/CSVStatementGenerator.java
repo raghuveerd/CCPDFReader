@@ -13,7 +13,7 @@ import java.util.*;
 public class CSVStatementGenerator {
 
     private static final Logger log = LogManager.getLogger(CSVStatementGenerator.class);
-    private static final String CSV_HEADER = "CARD, DATE, DESCRIPTION, AMOUNT, TYPE, CATEGORY";
+    private static final String CSV_HEADER = "CARD, DATE, REF, DESCRIPTION, AMOUNT, TYPE, CATEGORY";
     private static final String CATEGORY_STR = "CATEGORY.";
 
     private Properties getProp() throws Exception {
