@@ -1,5 +1,7 @@
 package dr.reader;
 
+import dr.reader.transaction.TransactionCSVEntry;
+import dr.reader.transaction.TransactionCSVEntryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,15 +13,18 @@ public class StatementReaderImpl implements StatementReader {
     private static final Logger log = LogManager.getLogger(StatementReaderImpl.class);
     private static final String UNCATEGORISED_CATEGORY = "UNCATEGORISED";
 
-    public List<String> getTransactionsAsCSV(String name, String[] lines, Properties cardProps, Map<String, List<String>> categories) {
-        List<String> transactions = getTransactions(lines, cardProps);
-        List<String> csvStrings = new ArrayList<>();
+    public List<String> getTransactionsAsCSV(String cardFileName, String[] lines, Properties cardProps, Map<String, List<String>> categories) {
+        List<String> transactions = getTransactionLines(lines, cardProps);
+        List<String> transactionEntries = new ArrayList<>();
 
         //ICICI statements contains duplicate entries when there are more statements
         //they do this to show everything back in one page.
         List<String> refIds = new ArrayList<>(transactions.size());
 
-        String cardName = name.substring(0, name.indexOf("."));
+        String cardName = cardFileName.substring(0, cardFileName.indexOf("."));
+
+        TransactionCSVEntryBuilder builder = new TransactionCSVEntryBuilder(cardName);
+
         for (String transaction : transactions) {
 
             transaction = handleSpecialCases(transaction);
@@ -39,35 +44,26 @@ public class StatementReaderImpl implements StatementReader {
 
             //replace thousand separators
             amount = amount.replace(COMMA, EMPTY_STRING);
-            String description = mergeList(transactionSplit, 2, transactionSplit.size() - 1);
+            String description = mergeListIntoString(transactionSplit, 2, transactionSplit.size() - 1);
             //replace comma in description
             description = description.replace(COMMA, SINGLE_SPACE);
             String isCredit = amount.endsWith(CREDIT_SUFFIX) ? CREDIT_SUFFIX : EMPTY_STRING;
             String category = getCategory(categories, transaction);
 
-            StringBuilder csvString = new StringBuilder();
-            csvString.append(cardName);
-            csvString.append(COMMA);
-            csvString.append(date);
-            csvString.append(COMMA);
-            csvString.append(refId);
-            csvString.append(COMMA);
-            csvString.append(description);
-            csvString.append(COMMA);
-            //replace CR in amount
-            amount = amount.replace(CREDIT_SUFFIX, EMPTY_STRING);
-            amount = checkAmount(amount);
-            csvString.append(amount);
-            csvString.append(COMMA);
-            csvString.append(isCredit);
-            csvString.append(COMMA);
-            csvString.append(category);
+            TransactionCSVEntry entry = builder.date(date)
+                    .refString(refId)
+                    .amount(amount)
+                    .description(description)
+                    .type(isCredit)
+                    .category(category)
+                    .build();
 
-            log.info(csvString.toString());
-            csvStrings.add(csvString.toString());
+            String csvString = entry.toString();
+            log.info(csvString);
+            transactionEntries.add(csvString);
 
         }
-        return csvStrings;
+        return transactionEntries;
     }
 
     private String handleSpecialCases(String transaction) {
@@ -78,16 +74,6 @@ public class StatementReaderImpl implements StatementReader {
         return transaction;
     }
 
-    private String checkAmount(String amount) {
-        try {
-            if (amount != null && Character.isDigit(amount.charAt(0))) {
-                return amount;
-            }
-        } catch (Exception e) {
-            log.error("Error checking amount for :" + amount, e);
-        }
-        return "0.0";
-    }
 
     private String getCategory(Map<String, List<String>> categories, String description) {
         for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
@@ -102,7 +88,7 @@ public class StatementReaderImpl implements StatementReader {
         return UNCATEGORISED_CATEGORY;
     }
 
-    private List<String> getTransactions(String[] lines, Properties cardProps) {
+    private List<String> getTransactionLines(String[] lines, Properties cardProps) {
         List<String> transactions = new ArrayList<>();
         String startString = cardProps.getProperty(StatementProps.START.getPropKey());
         List<String> startStringList = Arrays.asList(startString.split(COMMA));
@@ -117,11 +103,11 @@ public class StatementReaderImpl implements StatementReader {
         boolean statementEnded = false;
 
         for (String line : lines) {
-            if (isLineStatementStart(startStringList, line) && !statementStarted) {
+            if (isLineStartWith(startStringList, line) && !statementStarted) {
                 statementStarted = true;
             }
 
-            if (isLineStatementStart(endStringList, line)) {
+            if (isLineStartWith(endStringList, line)) {
                 statementEnded = true;
             }
 
@@ -167,7 +153,7 @@ public class StatementReaderImpl implements StatementReader {
         return patterns;
     }
 
-    private boolean isLineStatementStart(List<String> startStringList, String line) {
+    private boolean isLineStartWith(List<String> startStringList, String line) {
         for (String entry : startStringList) {
             if (line.startsWith(entry.trim()))
                 return true;
@@ -175,8 +161,7 @@ public class StatementReaderImpl implements StatementReader {
         return false;
     }
 
-
-    private String mergeList(List<String> list, int start, int end) {
+    private String mergeListIntoString(List<String> list, int start, int end) {
         StringBuilder builder = new StringBuilder();
         for (int i = start; i < end; i++) {
             builder.append(list.get(i)).append(SINGLE_SPACE);
