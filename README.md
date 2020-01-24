@@ -10,7 +10,7 @@ Example: For Citi Bank Cash Back card, the first word in a transaction line is d
     statement.transaction.first.word.contains=/
     statement.end=Your Cash Back Summary
 - The properties file can be updated with comma seperated values to handle different banks. I tested Citi and ICIC bank's statements.
-- The generated CSV contains **DATE, DESCRIPTION, AMOUNT, TYPE, CATEGORY** columns
+- The generated CSV contains **CARD, DATE, REF, DESCRIPTION, AMOUNT, TYPE, CATEGORY** columns
 - Specify transaction Categories in **statement.properties**. The property needs to start with _CATEGORY._
 
 Example:
